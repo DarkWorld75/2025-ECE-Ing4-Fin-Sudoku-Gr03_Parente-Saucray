@@ -99,7 +99,7 @@ namespace Sudoku.Benchmark
 
 		private static bool RunMenu()
 		{
-			Console.WriteLine("Select Mode: \n1-Single Solver Test, \n2-Benchmarks, \n3-Custom Benchmark, \n4-Exit program");
+			Console.WriteLine("Select Mode: \n1-Single Solver Test, \n2-Benchmarks, \n3-Custom Benchmark, \n4-Norvig, \n5-Exit program");
 			var strMode = Console.ReadLine();
 			int.TryParse(strMode, out var intMode);
 
@@ -114,6 +114,9 @@ namespace Sudoku.Benchmark
 				case 3:
 					CustomBenchmark();
 					break;
+                case 4:
+                    Norvig();
+                    break;
 				default:
 					return true;
 			}
@@ -314,7 +317,36 @@ namespace Sudoku.Benchmark
 				return values[values.Count / 2];
 			}
 		}
+        private static void Norvig()
+{
+       
+{
+    static void Norvig()
+    {
+        int[,] board = new int[9, 9] 
+        {
+            {5, 3, 0, 0, 7, 0, 0, 0, 0},
+            {6, 0, 0, 1, 9, 5, 0, 0, 0},
+            {0, 9, 8, 0, 0, 0, 0, 6, 0},
+            {8, 0, 0, 0, 6, 0, 0, 0, 3},
+            {4, 0, 0, 8, 0, 3, 0, 0, 1},
+            {7, 0, 0, 0, 2, 0, 0, 0, 6},
+            {0, 6, 0, 0, 0, 0, 2, 8, 0},
+            {0, 0, 0, 4, 1, 9, 0, 0, 5},
+            {0, 0, 0, 0, 8, 0, 0, 7, 9}
+        };
 
-
-	}
+        NorvigSolver solver = new NorvigSolver();
+        if (solver.Solve(board))
+        {
+            Console.WriteLine("Sudoku résolu !");
+        }
+        else
+        {
+            Console.WriteLine("Échec de la résolution.");
+        }
+    }
 }
+
+        
+
