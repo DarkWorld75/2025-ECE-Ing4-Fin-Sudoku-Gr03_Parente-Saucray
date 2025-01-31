@@ -52,7 +52,7 @@ namespace Sudoku.Shared
 
             return toreturn;
         }
-        
+            
         public  int[] GetColomn( int columnIndex)
         {
             if (columnIndex < 0 || columnIndex >= 9)
@@ -395,5 +395,11 @@ namespace Sudoku.Shared
 
         public int NbEmptyCells() => Cells.Cast<int>().Count(c => c == 0);
         
+        
+        public static SudokuGrid FromArray(int[,] array)
+            {
+                return new SudokuGrid { Cells = array };
+            }
     }
+  
 }
