@@ -8,23 +8,28 @@ using System.Runtime.InteropServices;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 using Microsoft.Extensions.Configuration;
-//using Humanizer;
+using System.Text;
+using Sudoku.Norvig;
 using Sudoku.Shared;
+
+
+//using Humanizer;
+
 
 namespace Sudoku.Benchmark
 {
-	class Program
+    class Program
     {
 
 #if DEBUG
-		public static bool IsDebug = true;
+        public static bool IsDebug = true;
 #else
         public static bool IsDebug = false;
 #endif
 
-	    static IConfiguration Configuration;
+        static IConfiguration Configuration;
 
-		static void Main(string[] args)
+        static void Main(string[] args)
         {
 
             Console.WriteLine("Benchmarking GrilleSudoku Solvers");
@@ -32,41 +37,41 @@ namespace Sudoku.Benchmark
 
             // Configuration Builder
             var builder = new ConfigurationBuilder()
-	            .SetBasePath(Directory.GetCurrentDirectory())
-	            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
             Configuration = builder.Build();
 
             PythonConfiguration pythonConfig = null;
 
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-				pythonConfig = Configuration.GetSection("PythonConfig:OSX").Get<PythonConfiguration>();
-	            
+                pythonConfig = Configuration.GetSection("PythonConfig:OSX").Get<PythonConfiguration>();
+
             }
-			else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-			{
-				pythonConfig = Configuration.GetSection("PythonConfig:Linux").Get<PythonConfiguration>();
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+            {
+                pythonConfig = Configuration.GetSection("PythonConfig:Linux").Get<PythonConfiguration>();
                 //LinuxInstaller.InstallPath = "/root/.pyenv/versions/3.10.5";
                 //LinuxInstaller.PythonDirectoryName = "/root/.pyenv/versions/3.10.5/bin";
                 //LinuxInstaller.LibFileName = "/root/.pyenv/versions/3.10.5/lib/libpython3.10.so";
-			}
+            }
 
-			if (pythonConfig != null)
-			{
-				Console.WriteLine("Customizing MacOs/Linux Python Install from appsettings.json file");
-				if (!string.IsNullOrEmpty(pythonConfig.InstallPath))
-				{
-					MacInstaller.InstallPath = pythonConfig.InstallPath;
-				}
-				if (!string.IsNullOrEmpty(pythonConfig.PythonDirectoryName))
-				{
-					MacInstaller.PythonDirectoryName = pythonConfig.PythonDirectoryName;
-				}
-				if (!string.IsNullOrEmpty(pythonConfig.LibFileName))
-				{
-					MacInstaller.LibFileName = pythonConfig.LibFileName;
-				}
+            if (pythonConfig != null)
+            {
+                Console.WriteLine("Customizing MacOs/Linux Python Install from appsettings.json file");
+                if (!string.IsNullOrEmpty(pythonConfig.InstallPath))
+                {
+                    MacInstaller.InstallPath = pythonConfig.InstallPath;
+                }
+                if (!string.IsNullOrEmpty(pythonConfig.PythonDirectoryName))
+                {
+                    MacInstaller.PythonDirectoryName = pythonConfig.PythonDirectoryName;
+                }
+                if (!string.IsNullOrEmpty(pythonConfig.LibFileName))
+                {
+                    MacInstaller.LibFileName = pythonConfig.LibFileName;
+                }
             }
 
             while (true)
@@ -75,7 +80,7 @@ namespace Sudoku.Benchmark
                 {
                     if (RunMenu())
                     {
-                       break;
+                        break;
                     }
 
                 }
@@ -97,35 +102,35 @@ namespace Sudoku.Benchmark
         }
 
 
-		private static bool RunMenu()
-		{
-			Console.WriteLine("Select Mode: \n1-Single Solver Test, \n2-Benchmarks, \n3-Custom Benchmark, \n4-Norvig, \n5-Exit program");
-			var strMode = Console.ReadLine();
-			int.TryParse(strMode, out var intMode);
+        private static bool RunMenu()
+        {
+            Console.WriteLine("Select Mode: \n1-Single Solver Test, \n2-Benchmarks, \n3-Custom Benchmark, \n4-Norvig, \n5-Exit program");
+            var strMode = Console.ReadLine();
+            int.TryParse(strMode, out var intMode);
 
-			switch (intMode)
-			{
-				case 1:
-					SingleSolverTest();
-					break;
-				case 2:
-					Benchmark();
-					break;
-				case 3:
-					CustomBenchmark();
-					break;
+            switch (intMode)
+            {
+                case 1:
+                    SingleSolverTest();
+                    break;
+                case 2:
+                    Benchmark();
+                    break;
+                case 3:
+                    CustomBenchmark();
+                    break;
                 case 4:
                     Norvig();
                     break;
-				default:
-					return true;
-			}
+                default:
+                    return true;
+            }
 
-			return false;
-		}
+            return false;
+        }
 
 
-		private static void Benchmark()
+        private static void Benchmark()
         {
             Console.WriteLine("Select Benchmark Type: \n1-Quick Benchmark (Easy, 2 Sudokus, 10s max per sudoku, Single invocation), \n2-Quick Benchmark (Medium, 10 Sudokus, 20s max per sudoku, Single invocation), \n3-Quick Benchmark (Hard, 10 Sudokus, 30s max per sudoku, Single invocation), \n4-Complete Benchmark (All difficulties, 1 mn max per sudoku, several invocations), \n5-Return");
             var strMode = Console.ReadLine();
@@ -136,16 +141,16 @@ namespace Sudoku.Benchmark
                 case 1:
                     var tempEasy = new QuickBenchmarkSolversEasy();
 
-					//               if (IsDebug)
-					//               {
-					//	BenchmarkRunner.Run<QuickBenchmarkSolversEasy>(new DebugInProcessConfig());
-					//}
-					//               else
-					//               {
-					//	BenchmarkRunner.Run<QuickBenchmarkSolversEasy>();
-					//}
-					BenchmarkRunner.Run<QuickBenchmarkSolversEasy>();
-					break;
+                    //               if (IsDebug)
+                    //               {
+                    //	BenchmarkRunner.Run<QuickBenchmarkSolversEasy>(new DebugInProcessConfig());
+                    //}
+                    //               else
+                    //               {
+                    //	BenchmarkRunner.Run<QuickBenchmarkSolversEasy>();
+                    //}
+                    BenchmarkRunner.Run<QuickBenchmarkSolversEasy>();
+                    break;
                 case 2:
                     //Init solvers
                     var tempMedium = new QuickBenchmarkSolversMedium();
@@ -222,7 +227,13 @@ namespace Sudoku.Benchmark
             var cloneSudoku = targetSudoku.CloneSudoku();
             var sw = Stopwatch.StartNew();
 
+            int[,] monTableau2D = new int[9, 9]; // Remplace par la vraie initialisation des données
+
+            SudokuGrid grid = SudokuGrid.FromArray(monTableau2D);
+
             cloneSudoku = solver.Solve(cloneSudoku);
+
+
 
             var elapsed = sw.Elapsed;
             if (!cloneSudoku.IsValid(targetSudoku))
@@ -241,112 +252,149 @@ namespace Sudoku.Benchmark
         }
 
 
-		private static void CustomBenchmark()
-		{
-			var solvers = Shared.SudokuGrid.GetSolvers();
-			Console.WriteLine("Select difficulty: 1-Easy, 2-Medium, 3-Hard");
-			var strDiff = Console.ReadLine();
-			int.TryParse(strDiff, out var intDiff);
-			SudokuDifficulty difficulty = SudokuDifficulty.Hard;
-
-			switch (intDiff)
-			{
-				case 1:
-					difficulty = SudokuDifficulty.Easy;
-					break;
-				case 2:
-					difficulty = SudokuDifficulty.Medium;
-					break;
-				case 3:
-					difficulty = SudokuDifficulty.Hard;
-					break;
-				default:
-					break;
-			}
-
-			var sudokus = SudokuHelper.GetSudokus(difficulty);
-
-			Console.WriteLine($"Choose up to 10 puzzle indices between 1 and {sudokus.Count}, separated by spaces (e.g., '1 5 10')");
-			var strIdx = Console.ReadLine();
-			var indices = strIdx.Split(' ').Select(x => int.Parse(x.Trim()) - 1).Take(10).ToList();
-
-			Console.WriteLine("Choose a solver:");
-			var solverList = solvers.ToList();
-			for (int i = 0; i < solvers.Count(); i++)
-			{
-				Console.WriteLine($"{i + 1} - {solverList[i].Key}");
-			}
-			var strSolver = Console.ReadLine();
-			int.TryParse(strSolver, out var intSolver);
-			var solver = solverList[intSolver - 1].Value.Value;
-
-			List<double> executionTimes = new List<double>();
-
-			foreach (var idx in indices)
-			{
-				var targetSudoku = sudokus[idx];
-				Console.WriteLine($"\n--- Resolving Sudoku index {idx + 1} ---");
-
-				for (int i = 0; i < 6; i++)
-				{
-					if (i == 0) continue; // Ignore the first run
-					var cloneSudoku = targetSudoku.CloneSudoku();
-					var sw = Stopwatch.StartNew();
-
-					cloneSudoku = solver.Solve(cloneSudoku);
-
-					sw.Stop();
-					executionTimes.Add(sw.Elapsed.TotalMilliseconds);
-				}
-			}
-
-			Console.WriteLine($"\n--- Global Statistics ---");
-			Console.WriteLine($"Average Time: {executionTimes.Average():F2} ms");
-			Console.WriteLine($"Median Time: {CalculateMedian(executionTimes):F2} ms");
-		}
-
-		private static double CalculateMedian(List<double> values)
-		{
-			values.Sort();
-			if (values.Count % 2 == 0)
-			{
-				return (values[values.Count / 2 - 1] + values[values.Count / 2]) / 2.0;
-			}
-			else
-			{
-				return values[values.Count / 2];
-			}
-		}
-        private static void Norvig()
-{
-       
-{
-    static void Norvig()
-    {
-        int[,] board = new int[9, 9] 
+        private static void CustomBenchmark()
         {
-            {5, 3, 0, 0, 7, 0, 0, 0, 0},
-            {6, 0, 0, 1, 9, 5, 0, 0, 0},
-            {0, 9, 8, 0, 0, 0, 0, 6, 0},
-            {8, 0, 0, 0, 6, 0, 0, 0, 3},
-            {4, 0, 0, 8, 0, 3, 0, 0, 1},
-            {7, 0, 0, 0, 2, 0, 0, 0, 6},
-            {0, 6, 0, 0, 0, 0, 2, 8, 0},
-            {0, 0, 0, 4, 1, 9, 0, 0, 5},
-            {0, 0, 0, 0, 8, 0, 0, 7, 9}
-        };
+            var solvers = Shared.SudokuGrid.GetSolvers();
+            Console.WriteLine("Select difficulty: 1-Easy, 2-Medium, 3-Hard");
+            var strDiff = Console.ReadLine();
+            int.TryParse(strDiff, out var intDiff);
+            SudokuDifficulty difficulty = SudokuDifficulty.Hard;
 
-        NorvigSolver solver = new NorvigSolver();
-        if (solver.Solve(board))
-        {
-            Console.WriteLine("Sudoku résolu !");
+            switch (intDiff)
+            {
+                case 1:
+                    difficulty = SudokuDifficulty.Easy;
+                    break;
+                case 2:
+                    difficulty = SudokuDifficulty.Medium;
+                    break;
+                case 3:
+                    difficulty = SudokuDifficulty.Hard;
+                    break;
+                default:
+                    break;
+            }
+
+            var sudokus = SudokuHelper.GetSudokus(difficulty);
+
+            Console.WriteLine($"Choose up to 10 puzzle indices between 1 and {sudokus.Count}, separated by spaces (e.g., '1 5 10')");
+            var strIdx = Console.ReadLine();
+            var indices = strIdx.Split(' ').Select(x => int.Parse(x.Trim()) - 1).Take(10).ToList();
+
+            Console.WriteLine("Choose a solver:");
+            var solverList = solvers.ToList();
+            for (int i = 0; i < solvers.Count(); i++)
+            {
+                Console.WriteLine($"{i + 1} - {solverList[i].Key}");
+            }
+            var strSolver = Console.ReadLine();
+            int.TryParse(strSolver, out var intSolver);
+            var solver = solverList[intSolver - 1].Value.Value;
+
+            List<double> executionTimes = new List<double>();
+
+            foreach (var idx in indices)
+            {
+                var targetSudoku = sudokus[idx];
+                Console.WriteLine($"\n--- Resolving Sudoku index {idx + 1} ---");
+
+                for (int i = 0; i < 6; i++)
+                {
+                    if (i == 0) continue; // Ignore the first run
+                    var cloneSudoku = targetSudoku.CloneSudoku();
+                    var sw = Stopwatch.StartNew();
+
+                    int[,] monTableau2D = new int[9, 9]; // Remplace par la vraie initialisation des données
+
+                    SudokuGrid grid = SudokuGrid.FromArray(monTableau2D);
+
+
+                    cloneSudoku = solver.Solve(cloneSudoku);
+
+                    sw.Stop();
+                    executionTimes.Add(sw.Elapsed.TotalMilliseconds);
+                }
+            }
+
+            Console.WriteLine($"\n--- Global Statistics ---");
+            Console.WriteLine($"Average Time: {executionTimes.Average():F2} ms");
+            Console.WriteLine($"Median Time: {CalculateMedian(executionTimes):F2} ms");
         }
-        else
+
+        private static double CalculateMedian(List<double> values)
         {
-            Console.WriteLine("Échec de la résolution.");
+            values.Sort();
+            if (values.Count % 2 == 0)
+            {
+                return (values[values.Count / 2 - 1] + values[values.Count / 2]) / 2.0;
+            }
+            else
+            {
+                return values[values.Count / 2];
+            }
+        }
+
+
+        private static void Norvig()
+        {
+           // Créer une instance du solveur
+            var solver = new NorvigSolver();
+
+            // Initialiser la grille (vide)
+            solver.InitializeGrid();
+
+            // Générer une grille complète (résolue)
+            GenerateCompletedBoard(solver);
+
+            // Choisir un niveau de difficulté (1, 2, 3)
+            int difficulty = GetDifficulty();
+
+            // Retirer des chiffres en fonction de la difficulté choisie
+            NorvigSolver.RemoveDigits(solver.GetSolvedBoard(), difficulty);
+
+            // Afficher le puzzle généré
+            Console.WriteLine("Puzzle à résoudre : ");
+            solver.DisplayBoard();
+
+            // Résoudre le puzzle
+            bool isSolved = solver.Solve();
+
+            // Afficher le puzzle résolu
+            if (isSolved)
+            {
+                Console.WriteLine("\nPuzzle résolu : ");
+                solver.DisplayBoard();
+            }
+            else
+            {
+                Console.WriteLine("Le puzzle ne peut pas être résolu.");
+            }
+        }
+
+        // Générer une grille complète (résolue)
+        public static void GenerateCompletedBoard(NorvigSolver solver)
+        {
+            solver.InitializeGrid();
+            solver.Solve();
+        }
+
+        // Obtenir le niveau de difficulté
+        public static int GetDifficulty()
+        {
+            Console.WriteLine("Choisissez un niveau de difficulté :");
+            Console.WriteLine("1. Facile");
+            Console.WriteLine("2. Moyen");
+            Console.WriteLine("3. Difficile");
+            int difficulty;
+            while (!int.TryParse(Console.ReadLine(), out difficulty) || difficulty < 1 || difficulty > 3)
+            {
+                Console.WriteLine("Veuillez entrer un nombre entre 1 et 3.");
+            }
+            return difficulty;
         }
     }
-}
 
-        
+
+
+}
 

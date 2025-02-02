@@ -1,176 +1,147 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Sudoku.Shared;
 
-
-namespace Sudoku.Solvers
+namespace Sudoku.Norvig
 {
-    public class NorvigSolver : ISudokuSolver
+    public class NorvigSolver
     {
-        private const string Digits = "123456789";
         private const int GridSize = 9;
-
-        private Dictionary<string, string> _values;
-        private Dictionary<string, List<string>> _peers;
-        private Dictionary<string, List<List<string>>> _units;
+        private const int BoxSize = 3;
+        private readonly int[,] _grid;
 
         public NorvigSolver()
         {
-            (_peers, _units) = InitializePeersAndUnits();
+            _grid = new int[GridSize, GridSize];
         }
 
-        public bool Solve(int[,] board)
+        // Initialiser la grille (vide)
+        public void InitializeGrid()
         {
-            _values = InitializeValues(board);
-            return Search(_values) != null;
-        }
-
-        private Dictionary<string, string> InitializeValues(int[,] board)
-        {
-            var values = new Dictionary<string, string>();
-            var squares = GenerateSquares();
-
             for (int i = 0; i < GridSize; i++)
             {
                 for (int j = 0; j < GridSize; j++)
                 {
-                    string square = squares[i * GridSize + j];
-                    values[square] = board[i, j] == 0 ? Digits : board[i, j].ToString();
+                    _grid[i, j] = 0; // 0 représente une case vide
                 }
             }
-            return values;
         }
 
-        private Dictionary<string, List<string>> InitializePeersAndUnits()
+        // Résoudre le puzzle
+        public bool Solve()
         {
-            var squares = GenerateSquares();
-            var unitList = GenerateUnitList(squares);
-            var units = new Dictionary<string, List<List<string>>>();
-            var peers = new Dictionary<string, List<string>>();
-
-            foreach (var square in squares)
-            {
-                units[square] = unitList.Where(unit => unit.Contains(square)).ToList();
-                peers[square] = units[square].SelectMany(unit => unit).Distinct().Where(s => s != square).ToList();
-            }
-
-            return (peers, units);
+            return Solve(0, 0);
         }
 
-        private List<string> GenerateSquares()
+        private bool Solve(int row, int col)
         {
-            var rows = "ABCDEFGHI".ToCharArray();
-            var cols = Digits.ToCharArray();
-            var squares = new List<string>();
-
-            foreach (var r in rows)
-            {
-                foreach (var c in cols)
-                {
-                    squares.Add($"{r}{c}");
-                }
-            }
-            return squares;
-        }
-
-        private List<List<string>> GenerateUnitList(List<string> squares)
-        {
-            var rows = "ABCDEFGHI".ToCharArray();
-            var cols = Digits.ToCharArray();
-            var unitList = new List<List<string>>();
-
-            // Rows
-            foreach (var r in rows)
-            {
-                unitList.Add(cols.Select(c => $"{r}{c}").ToList());
-            }
-
-            // Columns
-            foreach (var c in cols)
-            {
-                unitList.Add(rows.Select(r => $"{r}{c}").ToList());
-            }
-
-            // 3x3 Boxes
-            var rowGroups = new[] { "ABC", "DEF", "GHI" };
-            var colGroups = new[] { "123", "456", "789" };
-
-            foreach (var rg in rowGroups)
-            {
-                foreach (var cg in colGroups)
-                {
-                    unitList.Add(rg.SelectMany(r => cg.Select(c => $"{r}{c}")).ToList());
-                }
-            }
-            return unitList;
-        }
-
-        private Dictionary<string, string> Search(Dictionary<string, string> values)
-        {
-            if (values.Values.All(v => v.Length == 1))
-                return values;
-
-            var square = values.Where(v => v.Value.Length > 1)
-                               .OrderBy(v => v.Value.Length)
-                               .First().Key;
-
-            foreach (var digit in values[square])
-            {
-                var newValues = new Dictionary<string, string>(values);
-                if (Assign(newValues, square, digit.ToString()))
-                {
-                    var result = Search(newValues);
-                    if (result != null)
-                        return result;
-                }
-            }
-            return null;
-        }
-
-        private bool Assign(Dictionary<string, string> values, string square, string digit)
-        {
-            var otherValues = values[square].Replace(digit, "");
-            foreach (var d in otherValues)
-            {
-                if (!Eliminate(values, square, d.ToString()))
-                    return false;
-            }
-            return true;
-        }
-
-        private bool Eliminate(Dictionary<string, string> values, string square, string digit)
-        {
-            if (!values[square].Contains(digit))
+            // Si on a atteint la fin de la grille, c'est résolu
+            if (row == GridSize)
                 return true;
 
-            values[square] = values[square].Replace(digit, "");
+            if (col == GridSize)
+                return Solve(row + 1, 0);
 
-            if (values[square].Length == 0)
-                return false;
+            if (_grid[row, col] != 0)  // Si la cellule est déjà remplie, on passe à la suivante
+                return Solve(row, col + 1);
 
-            if (values[square].Length == 1)
+            // Essayer tous les chiffres possibles
+            for (int num = 1; num <= GridSize; num++)
             {
-                var d2 = values[square];
-                foreach (var peer in _peers[square])
+                if (IsValid(row, col, num))
                 {
-                    if (!Eliminate(values, peer, d2))
+                    _grid[row, col] = num;
+
+                    if (Solve(row, col + 1)) // Continuer avec la prochaine cellule
+                        return true;
+
+                    _grid[row, col] = 0;  // Revenir en arrière (backtracking)
+                }
+            }
+
+            return false;  // Aucun chiffre valide trouvé
+        }
+
+        // Vérifier si le numéro est valide pour une case donnée
+        private bool IsValid(int row, int col, int num)
+        {
+            // Vérifier la ligne
+            for (int i = 0; i < GridSize; i++)
+            {
+                if (_grid[row, i] == num)
+                    return false;
+            }
+
+            // Vérifier la colonne
+            for (int i = 0; i < GridSize; i++)
+            {
+                if (_grid[i, col] == num)
+                    return false;
+            }
+
+            // Vérifier le sous-grille 3x3
+            int boxRowStart = (row / BoxSize) * BoxSize;
+            int boxColStart = (col / BoxSize) * BoxSize;
+
+            for (int i = 0; i < BoxSize; i++)
+            {
+                for (int j = 0; j < BoxSize; j++)
+                {
+                    if (_grid[boxRowStart + i, boxColStart + j] == num)
                         return false;
                 }
             }
 
-            foreach (var unit in _units[square])
-            {
-                var places = unit.Where(s => values[s].Contains(digit)).ToList();
-                if (places.Count == 0)
-                    return false;
-                if (places.Count == 1 && !Assign(values, places[0], digit))
-                    return false;
-            }
-
             return true;
+        }
+
+        // Obtenir la grille résolue
+        public int[,] GetSolvedBoard()
+        {
+            return _grid;
+        }
+
+        // Retirer des chiffres en fonction de la difficulté
+        public static void RemoveDigits(int[,] board, int difficulty)
+        {
+            Random rand = new Random();
+            int emptyCells = difficulty switch
+            {
+                1 => 36,  // Facile : 36 cellules vides
+                2 => 45,  // Moyen : 45 cellules vides
+                3 => 54,  // Difficile : 54 cellules vides
+                _ => 45   // Par défaut : Moyen
+            };
+
+            int count = 0;
+            while (count < emptyCells)
+            {
+                int row = rand.Next(0, GridSize);
+                int col = rand.Next(0, GridSize);
+
+                if (board[row, col] != 0)
+                {
+                    board[row, col] = 0;
+                    count++;
+                }
+            }
+        }
+
+        // Affichage de la grille
+        public void DisplayBoard()
+        {
+            for (int i = 0; i < GridSize; i++)
+            {
+                for (int j = 0; j < GridSize; j++)
+                {
+                    Console.Write(_grid[i, j] == 0 ? ". " : _grid[i, j] + " ");
+                }
+                Console.WriteLine();
+            }
         }
     }
 }
+
+
+
+
